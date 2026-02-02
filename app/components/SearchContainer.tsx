@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import SearchForm from "./SearchForm";
 import Pagination from "./Pagination";
 import ResultsGrid from "./ResultsGrid";
@@ -22,6 +22,7 @@ export default function SearchContainer({
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleFormSubmit = (data: Record<string, any>) => {
     console.log("Form submitted with data:", data);
@@ -88,7 +89,19 @@ export default function SearchContainer({
       }
     };
 
-    fetchData();
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      fetchData();
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
   }, [filters, currentPage, pageSize]);
 
   return (
