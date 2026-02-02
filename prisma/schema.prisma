@@ -35,3 +35,17 @@ model Images {
   @@index([fotografen])
   @@index([restriction])
 }
+
+model SearchLog {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  query       String?
+  restriction String?
+  credit      String?
+  date        String?
+  page        Int
+  pageSize    Int
+  sort        String
+  responseMs  Int
+  resultCount Int
+}

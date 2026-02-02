@@ -1,9 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse, after } from "next/server";
 import prisma from "@/lib/prisma";
 import type { ImagesWhereInput } from "@/app/generated/prisma/internal/prismaNamespaceBrowser";
 import { startOfDay, endOfDay, parseISO, isValid } from "date-fns";
 
 export async function GET(request: NextRequest) {
+  const t0 = Date.now();
+
   // Get query params
   const searchParams = request.nextUrl.searchParams;
   const q = searchParams.get("q")?.trim();
@@ -60,6 +62,30 @@ export async function GET(request: NextRequest) {
     }),
     prisma.images.count({ where }),
   ]);
+
+  // Log query
+  const responseMs = Date.now() - t0;
+
+  // Asynchronous logging, don't block response
+  after(async () => {
+    try {
+      await prisma.searchLog.create({
+        data: {
+          query: q ?? null,
+          restriction: restriction ?? null,
+          credit: credit ?? null,
+          date: dateStr ?? null,
+          page,
+          pageSize,
+          sort,
+          responseMs,
+          resultCount: total,
+        },
+      });
+    } catch (err) {
+      console.warn("searchLog failed", err);
+    }
+  });
 
   return NextResponse.json({
     page,
