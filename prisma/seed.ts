@@ -1,15 +1,6 @@
 import { faker } from "@faker-js/faker";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../app/generated/prisma/client";
 import "dotenv/config";
-
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-});
-
-const prisma = new PrismaClient({
-  adapter,
-});
+import prisma from "@/lib/prisma";
 
 const TOTAL = 10_000;
 const BATCH_SIZE = 1000;
