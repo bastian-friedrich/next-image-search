@@ -26,50 +26,130 @@ export async function GET(request: NextRequest) {
     100,
   );
 
-  console.log("hewo", restrictionParams);
+  // Build filter conditions for WHERE clause
+  const filters: string[] = [];
+  const filterParams: any[] = [];
+  let paramIndex = 1;
 
-  const where: ImagesWhereInput = {
-    ...(q && {
-      OR: [
-        { suchtext: { contains: q, mode: "insensitive" } },
-        { fotografen: { contains: q, mode: "insensitive" } },
-        { bildnummer: { contains: q, mode: "insensitive" } },
-      ],
-    }),
+  // Date filter
+  if (dateStr) {
+    const parsed = parseISO(dateStr);
+    if (isValid(parsed)) {
+      filters.push(
+        `"datum" >= $${paramIndex} AND "datum" <= $${paramIndex + 1}`,
+      );
+      filterParams.push(startOfDay(parsed), endOfDay(parsed));
+      paramIndex += 2;
+    }
+  }
 
-    ...(credit && {
-      fotografen: { equals: credit, mode: "insensitive" },
-    }),
+  // Credit (photographer) filter
+  if (credit) {
+    filters.push(`LOWER("fotografen") = LOWER($${paramIndex})`);
+    filterParams.push(credit);
+    paramIndex += 1;
+  }
 
-    ...(dateStr &&
-      (() => {
-        const parsed = parseISO(dateStr); // expects YYYY-MM-DD
-        if (!isValid(parsed)) return {};
-        return {
-          datum: {
-            gte: startOfDay(parsed),
-            lte: endOfDay(parsed),
-          },
-        };
-      })()),
+  // Restrictions filter
+  if (restrictionParams.length > 0) {
+    const placeholders = restrictionParams
+      .map((_, i) => `$${paramIndex + i}`)
+      .join(", ");
+    filters.push(`LOWER("restriction") IN (${placeholders})`);
+    filterParams.push(...restrictionParams.map((r) => r.toLowerCase()));
+    paramIndex += restrictionParams.length;
+  }
 
-    ...(restrictionParams.length && {
-      restriction: {
-        in: restrictionParams,
-        mode: "insensitive",
-      },
-    }),
-  };
+  let items: any[];
+  let total: number;
 
-  const [items, total] = await Promise.all([
-    prisma.images.findMany({
-      where,
-      orderBy: { datum: sort },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.images.count({ where }),
-  ]);
+  // If there's a search query, use PostgreSQL FTS with ranking
+  if (q && q.length > 0) {
+    const searchFilter =
+      filters.length > 0 ? `AND ${filters.join(" AND ")}` : "";
+
+    const offset = (page - 1) * pageSize;
+
+    // Query with combined FTS index (searches suchtext, fotografen, bildnummer with weights)
+    const queryParams = [q, pageSize, offset, ...filterParams];
+
+    const itemsResult = await prisma.$queryRawUnsafe<any[]>(
+      `
+      SELECT 
+        id, "bildnummer", fotografen, suchtext, datum, hoehe, breite, restriction,
+        ts_rank(
+          setweight(to_tsvector('english', COALESCE(suchtext, '')), 'A') ||
+          setweight(to_tsvector('english', COALESCE(fotografen, '')), 'B') ||
+          setweight(to_tsvector('english', COALESCE("bildnummer", '')), 'C'),
+          plainto_tsquery('english', $1)
+        ) AS rank
+      FROM "Images"
+      WHERE (
+        setweight(to_tsvector('english', COALESCE(suchtext, '')), 'A') ||
+        setweight(to_tsvector('english', COALESCE(fotografen, '')), 'B') ||
+        setweight(to_tsvector('english', COALESCE("bildnummer", '')), 'C')
+      ) @@ plainto_tsquery('english', $1)
+      ${searchFilter}
+      ORDER BY rank DESC, "datum" ${sort}
+      LIMIT $2 OFFSET $3
+      `,
+      ...queryParams,
+    );
+
+    const countResult = await prisma.$queryRawUnsafe<[{ count: bigint }]>(
+      `
+      SELECT COUNT(*) as count
+      FROM "Images"
+      WHERE (
+        setweight(to_tsvector('english', COALESCE(suchtext, '')), 'A') ||
+        setweight(to_tsvector('english', COALESCE(fotografen, '')), 'B') ||
+        setweight(to_tsvector('english', COALESCE("bildnummer", '')), 'C')
+      ) @@ plainto_tsquery('english', $1)
+      ${searchFilter}
+      `,
+      q,
+      ...filterParams,
+    );
+
+    items = itemsResult.map(({ rank, ...item }) => item); // Remove rank from response
+    total = Number(countResult[0].count);
+  } else {
+    // No search query, just use regular filtering with Prisma
+    const where: ImagesWhereInput = {
+      ...(credit && {
+        fotografen: { equals: credit, mode: "insensitive" },
+      }),
+
+      ...(dateStr &&
+        (() => {
+          const parsed = parseISO(dateStr);
+          if (!isValid(parsed)) return {};
+          return {
+            datum: {
+              gte: startOfDay(parsed),
+              lte: endOfDay(parsed),
+            },
+          };
+        })()),
+
+      ...(restrictionParams.length && {
+        restriction: {
+          in: restrictionParams,
+          mode: "insensitive",
+        },
+      }),
+    };
+
+    [items, total] = await Promise.all([
+      prisma.images.findMany({
+        where,
+        orderBy: { datum: sort },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.images.count({ where }),
+    ]);
+  }
 
   // Log query
   const responseMs = Date.now() - t0;
