@@ -27,7 +27,7 @@ export default function SearchForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-lg shadow-sm p-4 space-y-3"
+      className="bg-gray-800 rounded-lg shadow-md p-4 space-y-3"
     >
       {/* Line 1: Search input */}
       <div>
@@ -36,7 +36,7 @@ export default function SearchForm({
           type="text"
           name="q"
           placeholder="Search images..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+          className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white placeholder-gray-400"
         />
       </div>
 
@@ -46,14 +46,14 @@ export default function SearchForm({
         <div>
           <label
             htmlFor="credit"
-            className="block text-xs font-medium text-gray-700 mb-1"
+            className="block text-xs font-medium text-gray-400 mb-1"
           >
             Credit
           </label>
           <select
             id="credit"
             name="credit"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white text-sm"
           >
             <option value="">Select...</option>
             {credits.map((credit) => (
@@ -68,7 +68,7 @@ export default function SearchForm({
         <div>
           <label
             htmlFor="restrictions"
-            className="block text-xs font-medium text-gray-700 mb-1"
+            className="block text-xs font-medium text-gray-400 mb-1"
           >
             Restrictions
           </label>
@@ -76,7 +76,7 @@ export default function SearchForm({
             id="restrictions"
             name="restrictions"
             multiple
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white text-sm"
           >
             {restrictions.map((restriction) => (
               <option key={restriction} value={restriction}>
@@ -90,7 +90,7 @@ export default function SearchForm({
         <div>
           <label
             htmlFor="date-from"
-            className="block text-xs font-medium text-gray-700 mb-1"
+            className="block text-xs font-medium text-gray-400 mb-1"
           >
             Date From
           </label>
@@ -98,7 +98,7 @@ export default function SearchForm({
             id="date-from"
             type="date"
             name="dateFrom"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white text-sm"
           />
         </div>
 
@@ -106,7 +106,7 @@ export default function SearchForm({
         <div>
           <label
             htmlFor="date-to"
-            className="block text-xs font-medium text-gray-700 mb-1"
+            className="block text-xs font-medium text-gray-400 mb-1"
           >
             Date To
           </label>
@@ -114,7 +114,7 @@ export default function SearchForm({
             id="date-to"
             type="date"
             name="dateTo"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white text-sm"
           />
         </div>
 
@@ -122,7 +122,7 @@ export default function SearchForm({
         <div>
           <label
             htmlFor="sort"
-            className="block text-xs font-medium text-gray-700 mb-1"
+            className="block text-xs font-medium text-gray-400 mb-1"
           >
             Sort
           </label>
@@ -130,7 +130,7 @@ export default function SearchForm({
             id="sort"
             name="sort"
             defaultValue="desc"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white text-sm"
           >
             <option value="desc">Descending</option>
             <option value="asc">Ascending</option>
@@ -141,7 +141,7 @@ export default function SearchForm({
       {/* Line 3: Submit button */}
       <button
         type="submit"
-        className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium cursor-pointer"
+        className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 font-medium transition-colors"
       >
         Search
       </button>

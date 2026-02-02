@@ -34,13 +34,13 @@ export default function Pagination({
 
   return (
     <div>
-      <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+      <div className="bg-gray-800 rounded-lg shadow-md p-4 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Page Size */}
           <div>
             <label
               htmlFor="page-size"
-              className="block text-xs font-medium text-gray-700 mb-1"
+              className="block text-xs font-medium text-gray-400 mb-1"
             >
               Page Size
             </label>
@@ -48,7 +48,7 @@ export default function Pagination({
               id="page-size"
               value={pageSize}
               onChange={handlePageSizeChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white text-sm"
             >
               <option value="10">10</option>
               <option value="20">20</option>
@@ -61,7 +61,7 @@ export default function Pagination({
           <div>
             <label
               htmlFor="current-page"
-              className="block text-xs font-medium text-gray-700 mb-1"
+              className="block text-xs font-medium text-gray-400 mb-1"
             >
               Page {page} from {totalPages}
             </label>
@@ -69,7 +69,7 @@ export default function Pagination({
               id="current-page"
               value={page}
               onChange={handlePageChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white text-sm"
             >
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                 (pageNum) => (
@@ -82,7 +82,7 @@ export default function Pagination({
           </div>
         </div>
       </div>
-      <div className="text-center text-xs text-gray-600 mt-2">
+      <div className="text-center text-xs text-gray-400 mt-2">
         {totalItems} items total
       </div>
     </div>

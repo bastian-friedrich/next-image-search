@@ -29,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans bg-black`}
       >
-        <header className="sticky top-0 z-50 border-b border-white/10 bg-neutral-900 shadow-md shadow-black/40">
+        <header className="sticky top-0 z-50 border-b border-white/10 bg-gray-700 shadow-md shadow-black/40">
           <div className="container mx-auto px-4 py-3">
             <Link
               href="/"

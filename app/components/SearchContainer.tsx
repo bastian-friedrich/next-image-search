@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import SearchForm from "./SearchForm";
 import Pagination from "./Pagination";
+import ResultsGrid from "./ResultsGrid";
 
 interface SearchContainerProps {
   credits: string[];
@@ -18,6 +19,9 @@ export default function SearchContainer({
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [results, setResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFormSubmit = (data: Record<string, any>) => {
     console.log("Form submitted with data:", data);
@@ -32,11 +36,17 @@ export default function SearchContainer({
     console.log("Pagination changed:", data);
     setPageSize(data.pageSize);
     setCurrentPage(data.currentPage);
+
+    // Scroll to top smoothly
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Fetch data when filters or pagination changes
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+
       const params = new URLSearchParams({
         page: currentPage.toString(),
         pageSize: pageSize.toString(),
@@ -52,13 +62,24 @@ export default function SearchContainer({
 
       try {
         const response = await fetch(`/api/search?${params.toString()}`);
+
+        if (!response.ok) {
+          throw new Error(`Search failed: ${response.statusText}`);
+        }
+
         const data = await response.json();
 
-        console.log("Search results:", data);
         setTotalPages(data.totalPages || 1);
         setTotalItems(data.total || 0);
+        setResults(data.items || []);
       } catch (error) {
         console.error("Error fetching search results:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to fetch results",
+        );
+        setResults([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -72,6 +93,7 @@ export default function SearchContainer({
         restrictions={restrictions}
         onSubmit={handleFormSubmit}
       />
+      <ResultsGrid items={results} isLoading={isLoading} error={error} />
       <Pagination
         page={currentPage}
         pageSize={pageSize}
