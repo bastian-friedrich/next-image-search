@@ -55,8 +55,13 @@ export default function SearchContainer({
       // Add filter params if they exist
       if (filters.q) params.append("q", filters.q);
       if (filters.credit) params.append("credit", filters.credit);
-      if (filters.restrictions)
+      if (Array.isArray(filters.restrictions)) {
+        filters.restrictions.forEach((restriction: string) => {
+          if (restriction) params.append("restriction", restriction);
+        });
+      } else if (filters.restrictions) {
         params.append("restriction", filters.restrictions);
+      }
       if (filters.dateFrom) params.append("date", filters.dateFrom);
       if (filters.sort) params.append("sort", filters.sort);
 

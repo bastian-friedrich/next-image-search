@@ -17,7 +17,13 @@ export default function SearchForm({
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const data = Object.fromEntries(formData);
+    const restrictionsSelected = formData
+      .getAll("restrictions")
+      .map((value) => value.toString());
+    const data = {
+      ...Object.fromEntries(formData),
+      restrictions: restrictionsSelected,
+    };
 
     if (onSubmit) {
       onSubmit(data);

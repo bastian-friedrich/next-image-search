@@ -14,7 +14,10 @@ export async function GET(request: NextRequest) {
   // Filter params
   const credit = searchParams.get("credit")?.trim();
   const dateStr = searchParams.get("date")?.trim();
-  const restriction = searchParams.get("restriction")?.trim();
+  const restrictionParams = searchParams
+    .getAll("restriction")
+    .map((value) => value.trim())
+    .filter(Boolean);
 
   // Pagination params
   const page = Math.max(Number(searchParams.get("page")) || 1, 1);
@@ -24,33 +27,70 @@ export async function GET(request: NextRequest) {
   );
 
   const where: ImagesWhereInput = {
-    ...(q && {
-      OR: [
-        { suchtext: { contains: q, mode: "insensitive" } },
-        { fotografen: { contains: q, mode: "insensitive" } },
-        { bildnummer: { contains: q, mode: "insensitive" } },
-      ],
-    }),
-
-    ...(credit && {
-      fotografen: { equals: credit, mode: "insensitive" },
-    }),
-
-    ...(dateStr &&
-      (() => {
-        const parsed = parseISO(dateStr); // expects YYYY-MM-DD
-        if (!isValid(parsed)) return {};
-        return {
-          datum: {
-            gte: startOfDay(parsed),
-            lte: endOfDay(parsed),
-          },
-        };
-      })()),
-
-    ...(restriction && {
-      restriction: { contains: restriction, mode: "insensitive" },
-    }),
+    AND: [
+      ...(q
+        ? [
+            {
+              OR: [
+                {
+                  suchtext: {
+                    contains: q,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  fotografen: {
+                    contains: q,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  bildnummer: {
+                    contains: q,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            },
+          ]
+        : []),
+      ...(credit
+        ? [
+            {
+              fotografen: {
+                equals: credit,
+                mode: "insensitive",
+              },
+            },
+          ]
+        : []),
+      ...(dateStr
+        ? [
+            (() => {
+              const parsed = parseISO(dateStr); // expects YYYY-MM-DD
+              if (!isValid(parsed)) return {};
+              return {
+                datum: {
+                  gte: startOfDay(parsed),
+                  lte: endOfDay(parsed),
+                },
+              };
+            })(),
+          ]
+        : []),
+      ...(restrictionParams.length
+        ? [
+            {
+              OR: restrictionParams.map((restriction) => ({
+                restriction: {
+                  contains: restriction,
+                  mode: "insensitive",
+                },
+              })),
+            },
+          ]
+        : []),
+    ],
   };
 
   const [items, total] = await Promise.all([
@@ -72,7 +112,8 @@ export async function GET(request: NextRequest) {
       await prisma.searchLog.create({
         data: {
           query: q ?? null,
-          restriction: restriction ?? null,
+          restriction:
+            restrictionParams.length > 0 ? restrictionParams.join(", ") : null,
           credit: credit ?? null,
           date: dateStr ?? null,
           page,
