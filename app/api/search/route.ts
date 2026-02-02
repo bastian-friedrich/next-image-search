@@ -26,71 +26,39 @@ export async function GET(request: NextRequest) {
     100,
   );
 
+  console.log("hewo", restrictionParams);
+
   const where: ImagesWhereInput = {
-    AND: [
-      ...(q
-        ? [
-            {
-              OR: [
-                {
-                  suchtext: {
-                    contains: q,
-                    mode: "insensitive",
-                  },
-                },
-                {
-                  fotografen: {
-                    contains: q,
-                    mode: "insensitive",
-                  },
-                },
-                {
-                  bildnummer: {
-                    contains: q,
-                    mode: "insensitive",
-                  },
-                },
-              ],
-            },
-          ]
-        : []),
-      ...(credit
-        ? [
-            {
-              fotografen: {
-                equals: credit,
-                mode: "insensitive",
-              },
-            },
-          ]
-        : []),
-      ...(dateStr
-        ? [
-            (() => {
-              const parsed = parseISO(dateStr); // expects YYYY-MM-DD
-              if (!isValid(parsed)) return {};
-              return {
-                datum: {
-                  gte: startOfDay(parsed),
-                  lte: endOfDay(parsed),
-                },
-              };
-            })(),
-          ]
-        : []),
-      ...(restrictionParams.length
-        ? [
-            {
-              OR: restrictionParams.map((restriction) => ({
-                restriction: {
-                  contains: restriction,
-                  mode: "insensitive",
-                },
-              })),
-            },
-          ]
-        : []),
-    ],
+    ...(q && {
+      OR: [
+        { suchtext: { contains: q, mode: "insensitive" } },
+        { fotografen: { contains: q, mode: "insensitive" } },
+        { bildnummer: { contains: q, mode: "insensitive" } },
+      ],
+    }),
+
+    ...(credit && {
+      fotografen: { equals: credit, mode: "insensitive" },
+    }),
+
+    ...(dateStr &&
+      (() => {
+        const parsed = parseISO(dateStr); // expects YYYY-MM-DD
+        if (!isValid(parsed)) return {};
+        return {
+          datum: {
+            gte: startOfDay(parsed),
+            lte: endOfDay(parsed),
+          },
+        };
+      })()),
+
+    ...(restrictionParams.length && {
+      restriction: {
+        in: restrictionParams,
+        mode: "insensitive",
+      },
+    }),
   };
 
   const [items, total] = await Promise.all([
