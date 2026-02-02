@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
   // Filter params
   const credit = searchParams.get("credit")?.trim();
   const dateStr = searchParams.get("date")?.trim();
+  const restriction = searchParams.get("restriction")?.trim();
 
   // Pagination params
   const page = Math.max(Number(searchParams.get("page")) || 1, 1);
@@ -44,6 +45,10 @@ export async function GET(request: NextRequest) {
           },
         };
       })()),
+
+    ...(restriction && {
+      restriction: { contains: restriction, mode: "insensitive" },
+    }),
   };
 
   const [items, total] = await Promise.all([
