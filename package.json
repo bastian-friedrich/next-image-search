@@ -8,12 +8,14 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "prisma:migrate": "npx prisma migrate dev --name init",
+    "prisma": "npm run prisma:migrate && npm run prisma:generate",
+    "prisma:migrate": "npx prisma migrate dev",
     "prisma:generate": "npx prisma generate",
     "prisma:seed": "npx prisma db seed",
     "prisma:studio": "npx prisma studio"
   },
   "dependencies": {
+    "@faker-js/faker": "^10.2.0",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "dotenv": "^17.2.3",

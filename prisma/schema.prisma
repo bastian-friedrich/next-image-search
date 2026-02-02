@@ -12,3 +12,19 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// Create image model for our database
+model Images {
+  id         Int      @id @default(autoincrement())
+  suchtext   String
+  bildnummer String   @unique
+  fotografen String
+  datum      DateTime
+  hoehe      Int
+  breite     Int
+
+  // Create indexes for faster querying
+  @@index([suchtext, fotografen, bildnummer])
+  @@index([suchtext])
+  @@index([fotografen])
+}

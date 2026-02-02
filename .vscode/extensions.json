@@ -1,3 +1,7 @@
 {
-  "recommendations": ["biomejs.biome", "dsznajder.es7-react-js-snippets"]
+  "recommendations": [
+    "biomejs.biome",
+    "dsznajder.es7-react-js-snippets",
+    "prisma.prisma"
+  ]
 }
