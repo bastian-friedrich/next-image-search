@@ -63,7 +63,7 @@ export default function SearchContainer({
       } else if (filters.restrictions) {
         params.append("restriction", filters.restrictions);
       }
-      if (filters.dateFrom) params.append("date", filters.dateFrom);
+      if (filters.date) params.append("date", filters.date);
       if (filters.sort) params.append("sort", filters.sort);
 
       try {

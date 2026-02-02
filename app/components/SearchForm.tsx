@@ -47,7 +47,7 @@ export default function SearchForm({
       </div>
 
       {/* Line 2: All filters + sorting */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Credit */}
         <div>
           <label
@@ -92,34 +92,18 @@ export default function SearchForm({
           </select>
         </div>
 
-        {/* Date From */}
+        {/* Date */}
         <div>
           <label
-            htmlFor="date-from"
+            htmlFor="date"
             className="block text-xs font-medium text-gray-400 mb-1"
           >
-            Date From
+            Date
           </label>
           <input
-            id="date-from"
+            id="date"
             type="date"
-            name="dateFrom"
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white text-sm"
-          />
-        </div>
-
-        {/* Date To */}
-        <div>
-          <label
-            htmlFor="date-to"
-            className="block text-xs font-medium text-gray-400 mb-1"
-          >
-            Date To
-          </label>
-          <input
-            id="date-to"
-            type="date"
-            name="dateTo"
+            name="date"
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-white text-sm"
           />
         </div>
