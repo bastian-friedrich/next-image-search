@@ -1,36 +1,246 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next Image Search
 
-## Getting Started
+Welcome to the **Image Search Application**! 👋
 
-First, run the development server:
+This is a modern web application for searching and browsing a large collection of images with advanced filtering, pagination, and full-text search capabilities.
+
+**Live Demo**: [https://next-image-search.vercel.app/](https://next-image-search.vercel.app/)
+
+## About This Project
+
+This project demonstrates a complete full-stack search application built with a focus on performance optimization through data normalization and indexing. The application allows users to search through thousands of images using various filters including credit (photographer), restrictions, date ranges, and sorting options. All search results are presented in an intuitive, responsive UI with smooth pagination.
+
+## Tech Stack
+
+- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL with Prisma ORM
+- **Code Quality**: Biome (linting & formatting)
+- **Deployment**: Vercel
+
+## Project Setup
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- npm or yarn
+
+### Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+# Create a .env file with your DATABASE_URL
+cp .env.example .env.local
+
+# Run database migrations
+npm run prisma
+
+# (Optional) Normalize existing data
+npm run normalize-data
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application will be available at [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Available Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Development
+npm run dev             # Start Next.js dev server with hot reload
 
-## Learn More
+# Database
+npm run prisma          # Run pending migrations
+npm run prisma:stuio    # Open Prisma Studio (visual DB browser)
 
-To learn more about Next.js, take a look at the following resources:
+# Data Processing
+npm run normalize-data  # Preprocess and normalize image metadata (run once after initial data import)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Code Quality
+npm run lint           # Run Biome linter
+npm run format         # Format code with Biome
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## High-Level Approach
 
-## Deploy on Vercel
+### 1. Project Initialization
+- Set up a clean Next.js project with TypeScript
+- Configured Biome for consistent code linting and formatting
+- Established project structure with clear separation of concerns (components, API routes, utilities)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 2. Database Initialization
+- Set up PostgreSQL database connection via Prisma
+- Configured Prisma client generation to custom output path
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 3. Database Structure
+- Created `Images` model with core fields: `bildnummer`, `fotografen`, `datum`, `suchtext`, `hoehe`, `breite`
+- Added `restriction` field for usage restrictions
+- Added `people` and `locations` arrays for normalized data
+- Created `SearchLog` model for analytics and performance monitoring
+
+### 4. API Development (Step by Step)
+- Built `/api/search` endpoint with support for:
+  - Full-text search on `suchtext`, `fotografen`, `bildnummer`
+  - Filtering by credit (photographer) and restrictions
+  - Date range filtering
+  - Pagination with configurable page size
+  - Sorting by date (ascending/descending)
+  - Asynchronous search logging for performance tracking
+
+### 5. Data Normalization
+- Implemented `normalize-data` script to preprocess image metadata
+- Normalizes search text and adds database indexes for improved query performance
+- Script adds `normalizeVersion` field to track which items have been processed
+- **Run once** after initial data import: `npm run normalize-data`
+
+### 6. Backend Completion
+- Ensured API returns paginated results with metadata (totalPages, total count)
+- Integrated search logging for monitoring query patterns and performance
+
+### 7. Frontend Development
+- Built responsive search form with:
+  - Query input field
+  - Credit dropdown
+  - Multi-select restrictions filter
+  - Date range picker
+  - Sort order selection
+- Implemented pagination controls with page size and current page selection
+- Created result grid displaying:
+  - Bildnummer (image identifier)
+  - Suchtext (with search query highlighting)
+  - Fotografen (photographer/credit)
+  - Datum (date)
+- Added loading, error, and empty states
+- Integrated data fetching with real-time updates on filter/pagination changes
+- **Note**: UI development was AI-assisted due to time constraints and repetitive styling requirements
+
+## Assumptions
+
+1. **Database Existence**: The PostgreSQL database is already set up and accessible
+2. **Data Normalization Necessity**: Raw data requires normalization to improve search performance and consistency
+3. **Index Strategy**: Database indexes are added during normalization on frequently queried fields (`suchtext`, `fotografen`, `bildnummer`, `restriction`)
+4. **One-Time Processing**: Normalization is a one-time build-time operation for existing data
+5. **Search Performance**: Most performance gains come from proper indexing and normalized data structure
+
+## Data Normalization Approach
+
+### What Gets Preprocessed
+
+- **Search Text** (`suchtext`): Converted to consistent casing and format for better matching
+- **Photographer/Credit** (`fotografen`): Standardized formatting for accurate filtering
+- **Restrictions**: Parsed and stored for quick filtering
+- **Database Indexes**: Added on high-cardinality fields used in WHERE clauses
+
+### Why It Helps
+
+1. **Query Performance**: Indexed fields enable fast lookups even with millions of records
+2. **Consistency**: Normalized data prevents matching failures due to formatting differences
+3. **Filtering Efficiency**: Separate indexed fields allow fast filtering without full-text search overhead
+4. **Space Optimization**: Normalized data structure can reduce storage requirements
+
+### Where It Happens
+
+- **Build Time** (Run Once):
+  - `npm run normalize-data` processes existing data
+  - Adds database indexes via Prisma migrations
+  - Sets `normalizeVersion` flag on processed items
+  - Happens before application goes live
+
+- **Runtime**:
+  - Search queries use pre-indexed fields
+  - No additional processing during query execution
+  - API logs queries asynchronously without blocking response
+
+### Updating Index as New Items Arrive
+
+Currently, new items would need to be:
+1. Manually processed through the normalization script, OR
+2. Integrated into an automated ingest pipeline (not yet implemented)
+
+The `normalizeVersion` field allows tracking which items are processed vs. pending normalization.
+
+## New Items Every Minute Scenario
+
+### Ingesting New Items
+
+**Option 1: Batch Processing (Current Approach)**
+- New items arrive via API/file upload
+- Accumulated items processed every N minutes with normalization script
+- Simpler to implement but introduces slight latency
+
+**Option 2: Real-Time Processing (Recommended for Scale)**
+- Implement message queue (e.g., Bull, RabbitMQ)
+- New items trigger asynchronous normalization job
+- Updated records immediately available for search
+- Prevents blocking the API endpoint
+
+### Updating Search Index
+
+- Run normalization on new batch every 1-5 minutes
+- Add new indexes for new unique values (new photographers, restrictions)
+- Update `SearchLog` table to track new content categories
+- Could implement incremental indexing to only process changed records
+
+### Keeping Query Latency Low
+
+- Use database-level indexes (already implemented)
+- Cache frequently accessed photographer/restriction lists
+- Implement query result caching for common searches
+- Use read replicas for search queries if needed
+- Consider denormalization for commonly joined fields
+
+### Avoiding UI Blocking
+
+- New items appear in results after next batch processing window
+- Search continues on existing indexed data
+
+## Limitations & Future Improvements
+
+### Current Limitations
+
+1. **Search Capabilities**: Basic SQL LIKE queries don't support advanced features (typo tolerance, synonyms, ranking)
+2. **Scalability**: PostgreSQL has limits for very large datasets (100M+ records)
+3. **Relevance**: No ML-based ranking or user behavior learning
+4. **Performance**: No full-text search engine specialization
+5. **Real-time Updates**: Manual batch processing for new data
+6. **Analytics**: Basic search logging without insights
+
+### What I Would Do Next
+
+#### Immediate Improvements
+- [ ] **Implement Full-Text Search**: Use PostgreSQL native FTS or Elasticsearch
+- [ ] **Add Result Ranking**: Implement relevance scoring based on match type
+- [ ] **Caching Layer**: Redis for photographer/restriction lists and query results
+- [ ] **Async Ingest Pipeline**: Bull/RabbitMQ for background processing
+- [ ] **Result Deduplication**: Handle duplicate images from different uploads
+
+#### Medium-term (If Scaling)
+- [ ] **Elasticsearch Integration**: Replace PostgreSQL search with specialized engine
+  - Better relevance scoring
+  - Typo tolerance with fuzzy matching
+  - Real-time indexing without batching
+  - Aggregations and faceted search
+  - Synonym support
+- [ ] **Image Metadata Extraction**: Auto-detect tags, colors, objects in images
+- [ ] **Advanced Filtering**: Image dimensions, color palettes, detected objects
+- [ ] **Search Analytics Dashboard**: Track popular searches, click-through rates
+- [ ] **Recommendation Engine**: "Similar images" based on metadata
+
+#### Long-term Optimizations
+- [ ] **CDN Integration**: Cache and serve images from edge locations
+- [ ] **A/B Testing**: Optimize ranking algorithms based on user behavior
+- [ ] **Machine Learning**: Learn from user interactions to improve relevance
+- [ ] **Specialized Search UI**: Filters, facets, saved searches, search history
+
+#### Why Elasticsearch Would Be Better
+- Purpose-built for search, not general-purpose database
+- Inverted indexes for sub-millisecond queries
+- Native support for typo tolerance, fuzzy matching, synonyms
+- Real-time indexing without batch processing
+- Powerful aggregations for analytics
+- Horizontal scaling through sharding
+- Better ranking algorithms out of the box
