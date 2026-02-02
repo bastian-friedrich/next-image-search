@@ -1,6 +1,13 @@
+import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 
+// Disable caching for real-time data
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
+
 export default async function StatisticsPage() {
+  // Force dynamic rendering by reading headers
+  headers();
   const [totals, avgTiming, commonKeywords] = await Promise.all([
     prisma.searchLog.count(),
     prisma.searchLog.aggregate({
