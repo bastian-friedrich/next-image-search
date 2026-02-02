@@ -1,12 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import type { ImagesWhereInput } from "@/app/generated/prisma/internal/prismaNamespaceBrowser";
+import { startOfDay, endOfDay, parseISO, isValid } from "date-fns";
 
 export async function GET(request: NextRequest) {
   // Get query params
   const searchParams = request.nextUrl.searchParams;
-  const q = searchParams.get("q");
+  const q = searchParams.get("q")?.trim();
   const sort = searchParams.get("sort") === "asc" ? "asc" : "desc";
+
+  // Filter params
+  const credit = searchParams.get("credit")?.trim();
+  const dateStr = searchParams.get("date")?.trim();
 
   // Pagination params
   const page = Math.max(Number(searchParams.get("page")) || 1, 1);
@@ -15,15 +20,31 @@ export async function GET(request: NextRequest) {
     100,
   );
 
-  const where: ImagesWhereInput | undefined = q
-    ? {
-        OR: [
-          { suchtext: { contains: q, mode: "insensitive" } },
-          { fotografen: { contains: q, mode: "insensitive" } },
-          { bildnummer: { contains: q, mode: "insensitive" } },
-        ],
-      }
-    : undefined;
+  const where: ImagesWhereInput = {
+    ...(q && {
+      OR: [
+        { suchtext: { contains: q, mode: "insensitive" } },
+        { fotografen: { contains: q, mode: "insensitive" } },
+        { bildnummer: { contains: q, mode: "insensitive" } },
+      ],
+    }),
+
+    ...(credit && {
+      fotografen: { equals: credit, mode: "insensitive" },
+    }),
+
+    ...(dateStr &&
+      (() => {
+        const parsed = parseISO(dateStr); // expects YYYY-MM-DD
+        if (!isValid(parsed)) return {};
+        return {
+          datum: {
+            gte: startOfDay(parsed),
+            lte: endOfDay(parsed),
+          },
+        };
+      })()),
+  };
 
   const [items, total] = await Promise.all([
     prisma.images.findMany({
