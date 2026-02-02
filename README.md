@@ -8,7 +8,7 @@ This is a modern web application for searching and browsing a large collection o
 
 ## About This Project
 
-This project demonstrates a complete full-stack search application built with a focus on performance optimization through data normalization and indexing. The application allows users to search through thousands of images using various filters including credit (photographer), restrictions, date ranges, and sorting options. All search results are presented in an intuitive, responsive UI with smooth pagination.
+This project demonstrates a full-stack search application focused on practical relevance ranking, clear filtering, and a clean UI. The application lets users search through thousands of images with filters (credit, restrictions, date range) and sorting. Results are paginated and presented in a responsive interface.
 
 ## Tech Stack
 
@@ -55,7 +55,7 @@ npm run dev             # Start Next.js dev server with hot reload
 
 # Database
 npm run prisma          # Run pending migrations
-npm run prisma:stuio    # Open Prisma Studio (visual DB browser)
+npm run prisma:studio   # Open Prisma Studio (visual DB browser)
 
 # Data Processing
 npm run normalize-data  # Preprocess and normalize image metadata (run once after initial data import)
@@ -103,11 +103,11 @@ npm run format         # Format code with Biome
   - Results ranked by `ts_rank()` for relevance, then by date
   - Word stemming (search "mountain" matches "mountains")
   - Phrase matching support
-  - ~100-1000x faster than basic string matching
+  - Faster and more relevant than basic string matching when indexed
 
 ### 6. Data Normalization
 - Implemented `normalize-data` script to preprocess image metadata
-- Normalizes search text and adds database indexes for improved query performance
+- Extracts structured fields for filtering and analytics
 - Script adds `normalizeVersion` field to track which items have been processed
 - **Run once** after initial data import: `npm run normalize-data`
 
@@ -144,18 +144,18 @@ npm run format         # Format code with Biome
 
 ### What Gets Preprocessed
 
-- **Search Text** (`suchtext`): Converted to consistent casing and format for better matching
-- **Photographer/Credit** (`fotografen`): Standardized formatting for accurate filtering
-- **Restrictions**: Parsed and stored for quick filtering
-- **Full-Text Search Index**: Combined GIN index on all searchable fields with proper weights
+- **Restrictions**: Regex-extracted from `suchtext` and stored in `restriction`
+- **People/Locations**: Parsed from `suchtext` (comma-separated segments) into arrays
+- **normalizeVersion**: Tracks processed rows for incremental normalization
+- **Full-Text Search Index**: Combined GIN index created via migrations
 
 ### Why It Helps
 
-1. **Query Performance**: FTS GIN indexes enable sub-millisecond lookups even with millions of records
-2. **Search Relevance**: PostgreSQL's `ts_rank()` provides intelligent result ordering
-3. **Word Stemming**: Automatically matches word variations (mountain/mountains, run/running)
-4. **Consistency**: Normalized data prevents matching failures due to formatting differences
-5. **Multi-Field Search**: Single index covers all searchable fields with configurable weights
+1. **Query Performance**: GIN indexes reduce the candidate set for ranking
+2. **Search Relevance**: `ts_rank()` provides meaningful ordering
+3. **Word Stemming**: Matches word variations (mountain/mountains, run/running)
+4. **Consistency**: Extracted fields are reliably filterable
+5. **Multi-Field Search**: Single index covers all searchable fields with weights
 
 ### Search Scoring & Weights
 
@@ -178,13 +178,11 @@ Results are ranked using `ts_rank()` which considers:
 - **Build Time** (Run Once):
   - `npm run normalize-data` processes existing data
   - Prisma migrations add FTS GIN indexes
-  - Combined index created: `idx_images_fts_combined`
-  - Sets `normalizeVersion` flag on processed items
-  - Happens before application goes live
+  - `normalizeVersion` flag set on processed items
 
 - **Runtime**:
   - Search queries use FTS with `to_tsvector()` and `plainto_tsquery()`
-  - PostgreSQL uses GIN index for fast lookups
+  - PostgreSQL uses GIN index for candidate lookup
   - Results ranked by relevance automatically
   - API logs queries asynchronously without blocking response
 
@@ -213,11 +211,9 @@ Benefits:
 
 ### Updating Index as New Items Arrive
 
-Currently, new items would need to be:
-1. Manually processed through the normalization script, OR
-2. Integrated into an automated ingest pipeline (not yet implemented)
+Currently, new items should be processed through the normalization script. For continuous ingestion, an automated pipeline (queue + workers) would normalize and write updates without blocking the API.
 
-The `normalizeVersion` field allows tracking which items are processed vs. pending normalization.
+The `normalizeVersion` field tracks which items are processed vs. pending normalization.
 
 ## New Items Every Minute Scenario
 
@@ -245,9 +241,8 @@ The `normalizeVersion` field allows tracking which items are processed vs. pendi
 
 - Use database-level indexes (already implemented)
 - Cache frequently accessed photographer/restriction lists
-- Implement query result caching for common searches
+- Add query result caching for common searches if traffic grows
 - Use read replicas for search queries if needed
-- Consider denormalization for commonly joined fields
 
 ### Avoiding UI Blocking
 
@@ -259,7 +254,7 @@ The `normalizeVersion` field allows tracking which items are processed vs. pendi
 ### Current Limitations
 
 1. **Advanced Features**: No typo tolerance or synonym support (requires Elasticsearch)
-2. **Scalability**: PostgreSQL FTS works well up to ~100M records, beyond that Elasticsearch recommended
+2. **Scalability**: PostgreSQL FTS is strong for large datasets, but Elasticsearch becomes attractive at very large scale
 3. **Personalization**: No ML-based ranking or user behavior learning
 4. **Real-time Updates**: Manual batch processing for new data
 5. **Analytics**: Basic search logging without deep insights
