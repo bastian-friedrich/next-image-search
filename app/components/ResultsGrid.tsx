@@ -3,18 +3,43 @@ interface ResultItem {
   bildnummer: string;
   fotografen: string;
   datum: string | Date;
+  suchtext: string;
 }
 
 interface ResultsGridProps {
   items: ResultItem[];
   isLoading?: boolean;
   error?: string | null;
+  searchQuery?: string;
+}
+
+// Helper function to highlight search query in text
+function highlightText(text: string, query?: string) {
+  if (!query || !text) return text;
+
+  const regex = new RegExp(
+    `(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+    "gi",
+  );
+  const parts = text.split(regex);
+
+  return parts.map((part, index) => {
+    if (regex.test(part)) {
+      return (
+        <span key={index} className="bg-yellow-600 text-white font-medium">
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
 }
 
 export default function ResultsGrid({
   items,
   isLoading,
   error,
+  searchQuery,
 }: ResultsGridProps) {
   // Loading state
   if (isLoading) {
@@ -101,6 +126,12 @@ export default function ResultsGrid({
 
           {/* Metadata */}
           <div className="p-3 space-y-2">
+            <div>
+              <div className="text-xs text-gray-400 font-medium">Suchtext</div>
+              <div className="text-sm text-gray-200">
+                {highlightText(item.suchtext, searchQuery)}
+              </div>
+            </div>
             <div>
               <div className="text-xs text-gray-400 font-medium">
                 Fotografen

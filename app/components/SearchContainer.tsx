@@ -93,7 +93,12 @@ export default function SearchContainer({
         restrictions={restrictions}
         onSubmit={handleFormSubmit}
       />
-      <ResultsGrid items={results} isLoading={isLoading} error={error} />
+      <ResultsGrid
+        items={results}
+        isLoading={isLoading}
+        error={error}
+        searchQuery={filters.q}
+      />
       <Pagination
         page={currentPage}
         pageSize={pageSize}
