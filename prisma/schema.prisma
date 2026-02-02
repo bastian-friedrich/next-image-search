@@ -23,8 +23,15 @@ model Images {
   hoehe      Int
   breite     Int
 
+  // Normalized fields
+  restriction String?  // e.g., "PUBLICATIONxINxGERxSUIxAUTxONLY"
+  people      String[] @default([])
+  locations   String[] @default([])
+  normalizeVersion Int?
+
   // Create indexes for faster querying
   @@index([suchtext, fotografen, bildnummer])
   @@index([suchtext])
   @@index([fotografen])
+  @@index([restriction])
 }

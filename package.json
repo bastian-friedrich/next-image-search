@@ -13,7 +13,8 @@
     "prisma:generate": "npx prisma generate",
     "prisma:seed": "npx prisma db seed",
     "prisma:studio": "npx prisma studio",
-    "postinstall": "npm run prisma:generate"
+    "postinstall": "npm run prisma:generate",
+    "normalize-data": "npx tsx ./scripts/normalize-data.ts"
   },
   "dependencies": {
     "@faker-js/faker": "^10.2.0",
