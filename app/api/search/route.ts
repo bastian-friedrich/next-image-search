@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   // Build filter conditions for WHERE clause
   const filters: string[] = [];
   const filterParams: any[] = [];
-  let paramIndex = 1;
+  let paramIndex = 4; // Start at 4 because $1=q, $2=pageSize, $3=offset
 
   // Date filter
   if (dateStr) {
@@ -70,6 +70,35 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * pageSize;
 
+    // Build count query filter (params start at $2 since $1 is the query)
+    const countFilters: string[] = [];
+    let countParamIndex = 2;
+
+    if (dateStr) {
+      const parsed = parseISO(dateStr);
+      if (isValid(parsed)) {
+        countFilters.push(
+          `"datum" >= $${countParamIndex} AND "datum" <= $${countParamIndex + 1}`,
+        );
+        countParamIndex += 2;
+      }
+    }
+
+    if (credit) {
+      countFilters.push(`LOWER("fotografen") = LOWER($${countParamIndex})`);
+      countParamIndex += 1;
+    }
+
+    if (restrictionParams.length > 0) {
+      const placeholders = restrictionParams
+        .map((_, i) => `$${countParamIndex + i}`)
+        .join(", ");
+      countFilters.push(`LOWER("restriction") IN (${placeholders})`);
+    }
+
+    const countSearchFilter =
+      countFilters.length > 0 ? `AND ${countFilters.join(" AND ")}` : "";
+
     // Query with combined FTS index (searches suchtext, fotografen, bildnummer with weights)
     const queryParams = [q, pageSize, offset, ...filterParams];
 
@@ -105,7 +134,7 @@ export async function GET(request: NextRequest) {
         setweight(to_tsvector('english', COALESCE(fotografen, '')), 'B') ||
         setweight(to_tsvector('english', COALESCE("bildnummer", '')), 'C')
       ) @@ plainto_tsquery('english', $1)
-      ${searchFilter}
+      ${countSearchFilter}
       `,
       q,
       ...filterParams,
