@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   // Get query params
   const searchParams = request.nextUrl.searchParams;
   const q = searchParams.get("q");
+  const sort = searchParams.get("sort") === "asc" ? "asc" : "desc";
 
   // Pagination params
   const page = Math.max(Number(searchParams.get("page")) || 1, 1);
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
   const [items, total] = await Promise.all([
     prisma.images.findMany({
       where,
-      orderBy: { datum: "desc" },
+      orderBy: { datum: sort },
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
